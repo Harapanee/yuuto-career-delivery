@@ -3,11 +3,22 @@ name: リール公開
 # public リポジトリのため pull_request トリガーは付けない。
 on:
   schedule:
-    # ★予定時刻の4分前に置く。GitHub Actions の cron は数分〜30分遅れ、
-    #   毎時 :00 は世界中の cron が集中して最も遅延しやすい。
-    #   対象の選定は「予定時刻との差の絶対値が±90分以内」なので前倒し起動でも正しく動く。
-    - cron: '56 2 * * *'      # 12:00 JST(UTC 03:00)の4分前
-    - cron: '56 9 * * *'      # 19:00 JST(UTC 10:00)の4分前
+    # ★GitHub の定時実行は遅延するだけでなく、高負荷時にキューされず破棄される。
+    #   遅れて来るのではなく、その回が永久に来ない。
+    #   2026-08-29 のしゅうとキャリアで 21:00 JST 枠が発火せず手動投稿で復旧している
+    #   (実行履歴に event: schedule の行が1件も無いことで確認)。
+    #   対策は1発勝負をやめて枠ごとに4発置くこと。publish.py は
+    #   「published ならスキップ」「予定時刻から±90分外ならスキップ」なので
+    #   何発撃っても二重投稿にならない(tests/test_publish.py で検証済み)。
+    #   毎時 :00 は世界中の cron が集中して最も遅延しやすいため :41 / :48 / :56 を主軸にする。
+    - cron: '41 2 * * *'      # 11:41 JST ┐
+    - cron: '48 2 * * *'      # 11:48 JST │ 12:00枠
+    - cron: '56 2 * * *'      # 11:56 JST │
+    - cron: '3 3 * * *'       # 12:03 JST ┘
+    - cron: '41 9 * * *'      # 18:41 JST ┐
+    - cron: '48 9 * * *'      # 18:48 JST │ 19:00枠
+    - cron: '56 9 * * *'      # 18:56 JST │
+    - cron: '3 10 * * *'      # 19:03 JST ┘
   workflow_dispatch:
 
 concurrency:
@@ -22,6 +33,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # ★1枠4発にしたことで新たに必要になった手当て。
+      #   checkout は schedule イベントでは「起動時点の SHA」を取る。cron が遅延して
+      #   2発がほぼ同時に作られると、後発は先発が push した state.json を見ないまま
+      #   起動し、二重投稿する。concurrency は実行順を直列化するだけで内容は更新しない。
+      #   公開の直前に state.json だけ origin の先頭から取り直して塞ぐ。
+      - name: state.json を origin の最新にする
+        run: |
+          git fetch --depth=1 origin ${{ github.event.repository.default_branch }}
+          git checkout FETCH_HEAD -- state.json || echo "state.json はまだ無い(初回)"
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
