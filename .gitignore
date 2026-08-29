@@ -1,0 +1,11 @@
+# 認証情報。public リポジトリなので絶対に置かない
+.env
+.env.*
+
+# レビュー用の一時成果物(差分パッケージ等)
+.superpowers/
+
+# Python キャッシュ
+__pycache__/
+*.pyc
+.pytest_cache/

@@ -1,0 +1,42 @@
+name: リール公開
+
+# public リポジトリのため pull_request トリガーは付けない。
+on:
+  schedule:
+    # ★予定時刻の4分前に置く。GitHub Actions の cron は数分〜30分遅れ、
+    #   毎時 :00 は世界中の cron が集中して最も遅延しやすい。
+    #   対象の選定は「予定時刻との差の絶対値が±90分以内」なので前倒し起動でも正しく動く。
+    - cron: '56 2 * * *'      # 12:00 JST(UTC 03:00)の4分前
+    - cron: '56 9 * * *'      # 19:00 JST(UTC 10:00)の4分前
+  workflow_dispatch:
+
+concurrency:
+  group: ig-state
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: リールを公開する
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+        run: python publish/publish.py
+      - name: state.json を保存する
+        if: always()
+        run: |
+          if [[ -n "$(git status --porcelain state.json)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add state.json
+            git commit -m "chore: 投稿結果を記録"
+            git push
+          fi
