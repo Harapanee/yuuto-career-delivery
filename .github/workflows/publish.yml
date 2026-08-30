@@ -20,6 +20,11 @@ on:
     - cron: '56 9 * * *'      # 18:56 JST │
     - cron: '3 10 * * *'      # 19:03 JST ┘
   workflow_dispatch:
+    inputs:
+      key:
+        description: '取りこぼしを手動で公開するときだけ指定(例 001_20260830_1200)。空なら通常どおり時刻で選ぶ'
+        required: false
+        default: ''
 
 concurrency:
   group: ig-state
@@ -49,6 +54,7 @@ jobs:
         env:
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          PUBLISH_KEY: ${{ inputs.key }}
         run: python publish/publish.py
       - name: state.json を保存する
         if: always()

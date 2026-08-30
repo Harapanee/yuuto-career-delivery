@@ -17,12 +17,24 @@ import state as state_mod
 JST = ZoneInfo("Asia/Tokyo")
 
 
-def run(schedule, state_data, now, user_id, token, *, client=ig_client):
-    """対象1件を公開する。(更新後state, 公開したキー or None) を返す"""
-    item = schedule_select.select_for_now(schedule, now)
+def run(schedule, state_data, now, user_id, token, *, client=ig_client, force_key=None):
+    """対象1件を公開する。(更新後state, 公開したキー or None) を返す
+
+    force_key を渡すと ±90分の窓を無視してそのキーを公開する(取りこぼしの手動復旧用)。
+    **窓だけを外し、「公開済みならスキップ」は外さない。**ここまで外すと二重投稿する。
+    """
+    if force_key:
+        item = next((x for x in schedule["items"] if x["key"] == force_key), None)
+        if item is None:
+            print(f"::error::{force_key} が schedule.json に無い")
+            return state_data, None
+        print(f"[手動] {force_key} を時刻の窓を無視して公開する")
+    else:
+        item = schedule_select.select_for_now(schedule, now)
     if item is None:
         print("[スキップ] 予定時刻から離れているため何もしない")
         return state_data, None
+
 
     key = item["key"]
     if state_mod.is_published(state_data, key):
@@ -54,9 +66,10 @@ def main():
     with open("schedule.json", encoding="utf-8") as f:
         schedule = json.load(f)
     now = datetime.datetime.now(JST)
+    force_key = os.environ.get("PUBLISH_KEY") or None
     try:
         updated, key = run(schedule, state_mod.load("state.json"),
-                           now, user_id, token)
+                           now, user_id, token, force_key=force_key)
     except ig_client.ContainerError as e:
         print(f"::error::公開に失敗: {e}")
         sys.exit(1)
