@@ -22,9 +22,26 @@ def test_select_for_now_25分遅れでも選ぶ():
     assert schedule_select.select_for_now(SCHEDULE, now)["key"] == "day01_0600"
 
 
-def test_select_for_now_90分を超えたら選ばない():
-    now = datetime.datetime(2026, 9, 1, 7, 31, tzinfo=JST)
+def test_select_for_now_2時間遅れでも選ぶ():
+    """2026-08-30 に cron が約2時間遅れて全て捨てられた。窓を180分にした理由。"""
+    now = datetime.datetime(2026, 9, 1, 8, 0, tzinfo=JST)
+    assert schedule_select.select_for_now(SCHEDULE, now)["key"] == "day01_0600"
+
+
+def test_select_for_now_判定窓を超えて遅れたら選ばない():
+    now = datetime.datetime(2026, 9, 1, 9, 1, tzinfo=JST)   # 06:00 から181分
     assert schedule_select.select_for_now(SCHEDULE, now) is None
+
+
+def test_select_for_now_次の枠を大きく前倒ししない():
+    """遅延は後ろにしか起きない。前倒しを広く許すと次の動画が早く出てしまう。"""
+    now = datetime.datetime(2026, 9, 1, 9, 30, tzinfo=JST)  # 12:00 の2時間半前
+    assert schedule_select.select_for_now(SCHEDULE, now) is None
+
+
+def test_select_for_now_cronの前倒し分は許す():
+    now = datetime.datetime(2026, 9, 1, 5, 41, tzinfo=JST)  # 06:00 の19分前
+    assert schedule_select.select_for_now(SCHEDULE, now)["key"] == "day01_0600"
 
 
 def test_select_for_now_最も近いものを選ぶ():

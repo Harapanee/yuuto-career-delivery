@@ -73,7 +73,7 @@ def test_run_コンテナが古ければ作り直す():
 
 def test_run_時刻が範囲外なら何もしない():
     c = FakeClient()
-    far = datetime.datetime(2026, 9, 1, 9, 0, tzinfo=JST)   # 3時間後
+    far = datetime.datetime(2026, 9, 1, 12, 0, tzinfo=JST)  # 判定窓(180分)の外
     st, key = pub.run(SCHEDULE, PREPARED, far, "IG", "T", client=c)
     assert key is None and c.published == []
 

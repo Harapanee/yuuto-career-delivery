@@ -12,7 +12,7 @@ import yaml
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 JST = datetime.timezone(datetime.timedelta(hours=9))
-WINDOW = datetime.timedelta(minutes=90)   # publish.py の判定窓と同じ
+WINDOW = datetime.timedelta(minutes=180)  # publish.py の判定窓と同じ
 
 
 def _crons(name):
@@ -43,7 +43,7 @@ def test_公開cronは全て予定時刻の判定窓内に入る():
         t = _jst(c)
         d = min(abs(datetime.datetime.combine(datetime.date(2026, 1, 1), t)
                     - datetime.datetime.combine(datetime.date(2026, 1, 1), s)) for s in slots)
-        assert d <= WINDOW, f"{c} ({t}) はどの枠からも±90分の外"
+        assert d <= WINDOW, f"{c} ({t}) はどの枠からも判定窓の外"
 
 
 def test_事前作成は0時と公開前の保険の2発ある():
