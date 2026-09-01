@@ -37,6 +37,8 @@
  "006_20260901_1900": {
   "container_created_at": "2026-09-01T05:37:24.294187+09:00",
   "container_id": "18091381727259690",
-  "status": "prepared"
+  "media_id": "18003807014977958",
+  "published_at": "2026-09-01T18:58:38.581400+09:00",
+  "status": "published"
  }
 }
