@@ -105,6 +105,8 @@
  "016_20260906_1900": {
   "container_created_at": "2026-09-06T02:05:25.227675+09:00",
   "container_id": "18092888918259690",
-  "status": "prepared"
+  "media_id": "18350853358222867",
+  "published_at": "2026-09-06T18:58:31.705698+09:00",
+  "status": "published"
  }
 }
