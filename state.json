@@ -119,6 +119,8 @@
  "018_20260907_1900": {
   "container_created_at": "2026-09-07T02:28:47.318237+09:00",
   "container_id": "18093153035259690",
-  "status": "prepared"
+  "media_id": "18375160813234514",
+  "published_at": "2026-09-07T18:58:28.485037+09:00",
+  "status": "published"
  }
 }
