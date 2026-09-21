@@ -1,0 +1,57 @@
+name: Threads公開
+
+# public リポジトリのため pull_request トリガーは付けない(secrets 保護)。
+on:
+  schedule:
+    # publish.yml と同じ思想: cron は遅延・欠落するので枠ごとに4発。
+    # threads_publish.py は「窓(-35分〜+180分)の外はスキップ」「published はスキップ」なので二重投稿しない。
+    - cron: '41 21 * * *'     # 06:41 JST ┐
+    - cron: '48 21 * * *'     # 06:48 JST │ 07:00枠
+    - cron: '56 21 * * *'     # 06:56 JST │
+    - cron: '3 22 * * *'      # 07:03 JST ┘
+    - cron: '11 3 * * *'      # 12:11 JST ┐
+    - cron: '18 3 * * *'      # 12:18 JST │ 12:30枠
+    - cron: '26 3 * * *'      # 12:26 JST │
+    - cron: '33 3 * * *'      # 12:33 JST ┘
+    - cron: '41 11 * * *'     # 20:41 JST ┐
+    - cron: '48 11 * * *'     # 20:48 JST │ 21:00枠
+    - cron: '56 11 * * *'     # 20:56 JST │
+    - cron: '3 12 * * *'      # 21:03 JST ┘
+  workflow_dispatch:
+    inputs:
+      key:
+        description: '取りこぼしを手動で公開するときだけ指定(例 T001_20261001_0700)。空なら時刻で選ぶ'
+        required: false
+        default: ''
+
+concurrency:
+  group: threads-state
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Threads に公開する
+        env:
+          THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+          PUBLISH_KEY: ${{ inputs.key }}
+        run: python publish/threads_publish.py
+      - name: threads_state.json を保存する
+        if: always()
+        run: |
+          if [[ -n "$(git status --porcelain threads_state.json)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add threads_state.json
+            git commit -m "chore(threads): 投稿結果を記録"
+            git push
+          fi
