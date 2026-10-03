@@ -420,6 +420,8 @@
  "069_20261003_1900": {
   "container_created_at": "2026-10-03T04:43:35.664959+09:00",
   "container_id": "18099012818259690",
-  "status": "prepared"
+  "media_id": "18104782022196481",
+  "published_at": "2026-10-03T18:58:29.704144+09:00",
+  "status": "published"
  }
 }
